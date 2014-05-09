@@ -1,0 +1,91 @@
+apply plugin: 'java'
+apply from: 'https://raw.github.com/akhikhl/gretty/master/pluginScripts/gretty8.plugin'
+apply plugin: 'maven'
+
+sourceCompatibility = 1.7
+version = '1.6'
+
+
+repositories {
+    mavenCentral()
+    maven {
+        url "http://m2.neo4j.org/content/repositories/releases"
+    }
+    maven {
+        url "http://repo.spring.io/snapshot"
+    }
+    maven {
+        url 'http://repo.spring.io/milestone'
+    }
+
+}
+
+configurations {
+    all*.exclude group: 'org.hamcrest', module: 'hamcrest-library'
+}
+
+dependencies {
+    compile group: 'org.springframework', name: 'spring-core', version: "$springframeworkVersion"
+    compile group: 'org.springframework', name: 'spring-beans', version: "$springframeworkVersion"
+    compile group: 'org.springframework', name: 'spring-aop', version: "$springframeworkVersion"
+    compile group: 'org.springframework', name: 'spring-context', version: "$springframeworkVersion"
+    compile group: 'org.springframework', name: 'spring-context-support', version: "$springframeworkVersion"
+    compile group: 'org.springframework', name: 'spring-tx', version: "$springframeworkVersion"
+    compile group: 'org.springframework', name: 'spring-webmvc', version: "$springframeworkVersion"
+    compile group: 'org.springframework.data', name: 'spring-data-neo4j', version: "$springDataVersion"
+    compile group: 'org.springframework.data', name: 'spring-data-neo4j-rest', version: "$springDataVersion"
+    compile group: 'org.springframework.hateoas', name: 'spring-hateoas', version: '0.9.0.RELEASE'
+    compile group: 'com.mangofactory', name: 'swagger-springmvc', version: '0.8.3'
+    compile group: 'org.neo4j', name: 'neo4j-rest-graphdb', version: '2.0.1'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.5'
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: '1.7.5'
+    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.0.1'
+    // {!begin jackson}
+    runtime group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.3.2'
+    runtime group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.3.2'
+    // {!end jackson}
+    // {!begin jaxb}
+    runtime group: 'javax.xml.bind', name: 'jaxb-api', version: '2.2.9'
+    // {!end jaxb}
+
+    compile group: 'com.sun.jersey', name: 'jersey-core', version: '1.9'
+    compile group: 'javax.validation', name: 'validation-api', version: '1.0.0.GA'
+
+    testCompile group: 'com.jayway.restassured', name: 'rest-assured', version: '2.3.0'
+    testCompile group: 'com.jayway.restassured', name: 'spring-mock-mvc', version: '2.3.0'
+    testCompile group: 'org.springframework', name: 'spring-test', version: "$springframeworkVersion"
+    testCompile (group: 'org.mockito', name: 'mockito-all', version: '1.9.5') {
+        exclude module: 'hamcrest-core'
+    }
+    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
+    testCompile group: 'org.testng', name: 'testng', version: '6.8.8'
+
+}
+
+test {
+    useTestNG() {
+        includeGroups 'unit'
+    }
+}
+
+task integrationTest(type: Test, dependsOn: 'test') {
+    useTestNG() {
+        includeGroups 'integration'
+    }
+}
+
+task(runSimple, dependsOn: 'build', type: org.gradle.api.tasks.JavaExec) {
+    main = 'com.findout.dependency.DependencyMain'
+    classpath = sourceSets.main.runtimeClasspath
+    systemProperty 'spring.profiles.active', "$springActiveProfiles"
+
+}
+
+gretty{
+    contextPath = '/'
+    jvmArgs = ['-Dspring.profiles.active=test']
+    onStart {
+        println 'Jetty starting!!!!!'
+    }
+}
+
